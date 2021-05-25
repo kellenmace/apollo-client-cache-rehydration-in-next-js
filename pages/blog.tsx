@@ -39,7 +39,8 @@ export default function Blog() {
     variables: {
       first: POSTS_PER_PAGE,
       after: null,
-    }
+    },
+    notifyOnNetworkStatusChange: true,
   });
   const posts = data?.posts?.edges?.map((edge: PostEdge) => edge.node) || [];
   const havePosts = Boolean(posts.length);
@@ -48,7 +49,7 @@ export default function Blog() {
   return (
     <Layout>
       <h1>Blog</h1>
-      {loading ? (
+      {!havePosts && loading ? (
         <p>Loading...</p>
       ) : error ? (
         <p>An error has occurred.</p>
