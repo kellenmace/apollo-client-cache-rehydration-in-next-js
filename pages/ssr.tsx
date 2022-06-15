@@ -1,68 +1,52 @@
-import { gql, useQuery } from "@apollo/client";
+import { gql  } from "@apollo/client";
 import { GetStaticPropsContext } from "next";
+import Ssr from "../components/Ssr";
 
 import { initializeApollo, addApolloState } from "../lib/apolloClient";
-import Layout from "../components/Layout";
 
-interface Post {
-  databaseId: number;
-  title: string;
-};
 
-interface PostEdge {
-  node: Post;
-};
+export interface Countries {
+  countries: Country[];
+}
 
-const POSTS_PER_PAGE = 10;
+export interface Country {
+  code:       string;
+  name:       string;
+  emoji:      string;
+  __typename: Typename;
+}
 
-const GET_POSTS = gql`
-  query getPosts($first: Int!, $after: String) {
-    posts(first: $first, after: $after) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        node {
-          id
-          databaseId
-          title
-          slug
-        }
-      }
+export enum Typename {
+  Country = "Country",
+}
+
+
+// interface Post {
+//   databaseId: number;
+//   title: string;
+// };
+
+// interface PostEdge {
+//   node: Post;
+// };
+
+// const POSTS_PER_PAGE = 10;
+
+const GET_COUNTRIES = gql`
+  query Countries {
+    countries {
+      code
+      name
+      emoji
     }
   }
 `;
 
-export default function SSR() {
-  const { loading, error, data } = useQuery(GET_POSTS, {
-    variables: {
-      first: POSTS_PER_PAGE,
-      after: null,
-    }
-  });
-  const posts = data?.posts?.edges?.map((edge: PostEdge) => edge.node) || [];
-  const havePosts = Boolean(posts.length);
+export default function SSRPage() {
+ 
 
   return (
-    <Layout>
-      <h1>SSR Page</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>An error has occurred.</p>
-      ) : !havePosts ? (
-        <p>No posts found.</p>
-      ) : (
-        posts.map((post: Post) => {
-          return (
-            <article key={post.databaseId} style={{ border: "2px solid #eee", padding: "1rem", marginBottom: "1rem", borderRadius: "10px" }}>
-              <h2>{post.title}</h2>
-            </article>
-          );
-        })
-      )}
-    </Layout>
+    <Ssr />
   );
 }
 
@@ -70,11 +54,11 @@ export async function getServerSideProps(context: GetStaticPropsContext) {
   const apolloClient = initializeApollo();
 
   await apolloClient.query({
-    query: GET_POSTS,
-    variables: {
-      first: POSTS_PER_PAGE,
-      after: null,
-    }
+    query: GET_COUNTRIES,
+    // variables: {
+    //   first: POSTS_PER_PAGE,
+    //   after: null,
+    // }
   });
 
   return addApolloState(apolloClient, {
