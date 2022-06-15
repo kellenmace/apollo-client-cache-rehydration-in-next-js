@@ -4,67 +4,78 @@ import { GetStaticPropsContext } from "next";
 import { initializeApollo, addApolloState } from "../lib/apolloClient";
 import Layout from "../components/Layout";
 
-interface Post {
-  databaseId: number;
-  title: string;
-};
+export interface Countries {
+  countries: Country[];
+}
 
-interface PostEdge {
-  node: Post;
-};
+export interface Country {
+  code:       string;
+  name:       string;
+  emoji:      string;
+  __typename: Typename;
+}
 
-const POSTS_PER_PAGE = 10;
+export enum Typename {
+  Country = "Country",
+}
 
-const GET_POSTS = gql`
-  query getPosts($first: Int!, $after: String) {
-    posts(first: $first, after: $after) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-      edges {
-        node {
-          id
-          databaseId
-          title
-          slug
-        }
-      }
+
+// interface Post {
+//   databaseId: number;
+//   title: string;
+// };
+
+// interface PostEdge {
+//   node: Post;
+// };
+
+// const POSTS_PER_PAGE = 10;
+
+
+
+const GET_COUNTRIES = gql`
+  query Countries {
+    countries {
+      code
+      name
+      emoji
     }
   }
 `;
 
 export default function Blog() {
-  const { loading, error, data, fetchMore } = useQuery(GET_POSTS, {
-    variables: {
-      first: POSTS_PER_PAGE,
-      after: null,
-    },
+  const { loading, error, data, fetchMore } = useQuery(GET_COUNTRIES, {
+    fetchPolicy:'cache-only',
+    // variables: {
+    //   first: POSTS_PER_PAGE,
+    //   after: null,
+    // },
     notifyOnNetworkStatusChange: true,
   });
-  const posts = data?.posts?.edges?.map((edge: PostEdge) => edge.node) || [];
-  const havePosts = Boolean(posts.length);
-  const haveMorePosts = Boolean(data?.posts?.pageInfo?.hasNextPage);
+  const countries = data?.countries || [];
+  const haveCountries = Boolean(countries.length);
+ // const haveMorePost = Boolean(data?.posts?.pageInfo?.hasNextPage);
+ 
 
   return (
     <Layout>
       <h1>Blog</h1>
-      {!havePosts && loading ? (
+      {!haveCountries && loading ? (
         <p>Loading...</p>
       ) : error ? (
         <p>An error has occurred.</p>
-      ) : !havePosts ? (
-        <p>No posts found.</p>
+      ) : !haveCountries ? (
+        <p>No countries found.</p>
       ) : (
-        posts.map((post: Post) => {
+        countries.map((country: Country, index:number) => {
           return (
-            <article key={post.databaseId} style={{ border: "2px solid #eee", padding: "1rem", marginBottom: "1rem", borderRadius: "10px" }}>
-              <h2>{post.title}</h2>
+            <article key={index} style={{ border: "2px solid #eee", padding: "1rem", marginBottom: "1rem", borderRadius: "10px" }}>
+              <h2>{country.code} | {country.name} | {country.emoji}</h2> 
             </article>
           );
         })
       )}
-      {havePosts ? (
+      {/* {havePosts ? (
         haveMorePosts ? (
           <form onSubmit={event => {
             event.preventDefault();
@@ -82,7 +93,7 @@ export default function Blog() {
         ) : (
           <p>✅ All posts loaded.</p>
         )
-      ) : null}
+      ) : null} */}
     </Layout>
   );
 }
@@ -91,11 +102,12 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const apolloClient = initializeApollo();
 
   await apolloClient.query({
-    query: GET_POSTS,
-    variables: {
-      first: POSTS_PER_PAGE,
-      after: null,
-    }
+    query: GET_COUNTRIES,
+    fetchPolicy: 'cache-first'
+    // variables: {
+    //   first: POSTS_PER_PAGE,
+    //   after: null,
+    // }
   });
 
   return addApolloState(apolloClient, {

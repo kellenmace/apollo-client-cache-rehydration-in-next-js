@@ -1,4 +1,4 @@
-import { gql, useApolloClient, useQuery } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 
 import Layout from "../components/Layout";
 
@@ -16,6 +16,7 @@ export interface Country {
 export enum Typename {
   Country = "Country",
 }
+
 
 // interface Post {
 //   databaseId: number;
@@ -38,14 +39,9 @@ const GET_COUNTRIES = gql`
   }
 `;
 
-
-
-export default function CSR() {
-
-  const apollo = useApolloClient()
-  console.log(apollo.cache.read({query:GET_COUNTRIES, optimistic:true}))
-  console.log(apollo)
+export default function Ssr() {
   const { loading, error, data } = useQuery(GET_COUNTRIES, {
+    fetchPolicy:  'cache-first'
     // variables: {
     //   first: POSTS_PER_PAGE,
     //   after: null,
@@ -57,7 +53,7 @@ export default function CSR() {
 
   return (
     <Layout>
-      <h1>CSR Page</h1>
+      <h1>SSR Page</h1>
       {loading ? (
         <p>Loading...</p>
       ) : error ? (
@@ -65,10 +61,10 @@ export default function CSR() {
       ) : !haveCountries ? (
         <p>No posts found.</p>
       ) : (
-        countries.map((country: Country, index:number) => {
+       countries.map((country: Country, index:number) => {
           return (
             <article key={index} style={{ border: "2px solid #eee", padding: "1rem", marginBottom: "1rem", borderRadius: "10px" }}>
-               <h2>{country.code} | {country.name} | {country.emoji}</h2> 
+                <h2>{country.code} | {country.name} | {country.emoji}</h2>
             </article>
           );
         })
@@ -76,3 +72,4 @@ export default function CSR() {
     </Layout>
   );
 }
+

@@ -1,8 +1,6 @@
-import { gql } from "@apollo/client";
-import { GetStaticPropsContext } from "next";
+import { gql, useQuery } from "@apollo/client";
 
-import { initializeApollo, addApolloState } from "../lib/apolloClient";
-import Ssg from "../components/Ssg";
+import Layout from "../components/Layout";
 
 export interface Countries {
   countries: Country[];
@@ -59,26 +57,35 @@ const GET_COUNTRIES = gql`
 //   }
 // `;
 
-export default function SSGPage() {
- 
-
-  return (
-    <Ssg />
-  );
-}
-
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const apolloClient = initializeApollo();
-
-  await apolloClient.query({
-    query: GET_COUNTRIES,
+export default function Ssg() {
+  const { loading, error, data } = useQuery(GET_COUNTRIES, {
     // variables: {
     //   first: POSTS_PER_PAGE,
     //   after: null,
     // }
   });
+  const countries = data?.countries || [];
+  const haveCountries = Boolean(countries.length);
 
-  return addApolloState(apolloClient, {
-    props: {},
-  });
+  return (
+    <Layout>
+      <h1>SSG Page</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p>An error has occurred.</p>
+      ) : !haveCountries ? (
+        <p>No posts found.</p>
+      ) : (
+        countries.map((country: Country, index:number) => {
+          return (
+            <article key={index} style={{ border: "2px solid #eee", padding: "1rem", marginBottom: "1rem", borderRadius: "10px" }}>
+                <h2>{country.code} | {country.name} | {country.emoji}</h2>
+            </article>
+          );
+        })
+      )}
+    </Layout>
+  );
 }
+
